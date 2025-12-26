@@ -2,29 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Counter App</title>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+        
         .container {
             text-align: center;
             background: white;
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
         }
+        
+        .device-indicator {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        
         h1 {
             color: #333;
             margin-bottom: 30px;
+            font-size: 32px;
         }
+        
         .counter-display {
             font-size: 72px;
             font-weight: bold;
@@ -34,12 +59,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            word-break: break-all;
         }
+        
         .button-container {
             display: flex;
             gap: 20px;
             justify-content: center;
+            flex-wrap: wrap;
         }
+        
+        .button-container a {
+            text-decoration: none;
+            flex: 1;
+            min-width: 140px;
+        }
+        
         button {
             padding: 15px 40px;
             font-size: 24px;
@@ -48,30 +83,149 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
+            width: 100%;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
+        
         .increment-btn {
             background-color: #4CAF50;
             color: white;
         }
+        
         .increment-btn:hover {
             background-color: #45a049;
             transform: scale(1.05);
         }
+        
+        .increment-btn:active {
+            background-color: #3d8b40;
+            transform: scale(0.95);
+        }
+        
         .decrement-btn {
             background-color: #f44336;
             color: white;
         }
+        
         .decrement-btn:hover {
             background-color: #da190b;
             transform: scale(1.05);
         }
-        button:active {
+        
+        .decrement-btn:active {
+            background-color: #c62828;
             transform: scale(0.95);
+        }
+        
+        /* Mobile optimizations */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 25px 20px;
+                border-radius: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .counter-display {
+                font-size: 56px;
+                margin: 20px 0;
+                min-height: 80px;
+            }
+            
+            .button-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .button-container a {
+                width: 100%;
+                min-width: unset;
+            }
+            
+            button {
+                padding: 18px 30px;
+                font-size: 20px;
+                border-radius: 8px;
+                min-height: 56px; /* Touch-friendly size */
+            }
+            
+            .device-indicator {
+                font-size: 11px;
+            }
+        }
+        
+        /* Small mobile devices */
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .counter-display {
+                font-size: 48px;
+                margin: 15px 0;
+                min-height: 70px;
+            }
+            
+            button {
+                padding: 16px 25px;
+                font-size: 18px;
+                min-height: 52px;
+            }
+        }
+        
+        /* Very small devices */
+        @media screen and (max-width: 360px) {
+            .counter-display {
+                font-size: 42px;
+            }
+            
+            button {
+                font-size: 16px;
+                padding: 14px 20px;
+            }
+        }
+        
+        /* Desktop hover effects - only on devices that support hover */
+        @media (hover: hover) and (pointer: fine) {
+            .increment-btn:hover {
+                background-color: #45a049;
+                transform: scale(1.05);
+            }
+            
+            .decrement-btn:hover {
+                background-color: #da190b;
+                transform: scale(1.05);
+            }
+        }
+        
+        /* Prevent text selection on buttons for better mobile UX */
+        button {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="device-indicator" id="deviceIndicator">Detecting device...</div>
         <h1>Counter App</h1>
         <div class="counter-display">{{ counter }}</div>
         <div class="button-container">
@@ -83,6 +237,48 @@
             </a>
         </div>
     </div>
+    
+    <script>
+        // Device detection function
+        function detectDevice() {
+            const indicator = document.getElementById('deviceIndicator');
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // Check for mobile devices
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+            
+            // Check for touch capability
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            // Check screen width
+            const isSmallScreen = window.innerWidth <= 768;
+            
+            // Determine device type
+            let deviceType = 'Desktop PC';
+            if (isMobile || (hasTouch && isSmallScreen)) {
+                deviceType = 'Smartphone';
+            } else if (hasTouch && window.innerWidth > 768) {
+                deviceType = 'Tablet';
+            }
+            
+            // Update indicator
+            indicator.textContent = `Device: ${deviceType}`;
+            
+            // Add class to body for CSS targeting if needed
+            if (isMobile || (hasTouch && isSmallScreen)) {
+                document.body.classList.add('mobile-device');
+            } else {
+                document.body.classList.add('desktop-device');
+            }
+        }
+        
+        // Run detection on load and resize
+        detectDevice();
+        window.addEventListener('resize', detectDevice);
+        window.addEventListener('orientationchange', function() {
+            setTimeout(detectDevice, 100);
+        });
+    </script>
 </body>
 </html>
 
